@@ -5,9 +5,9 @@ export const games = [
 ]
 
 export const reviews = [
-  { id: 1, rating: 5, content: 'This is a great game!' },
-  { id: 2, rating: 4, content: 'This is a good game!' },
-  { id: 3, rating: 3, content: 'This is a bad game!' },
+  { id: 1, rating: 5, content: 'This is a great game!', gameId: 1, authorId: 1 },
+  { id: 2, rating: 4, content: 'This is a good game!', gameId: 2, authorId: 2 },
+  { id: 3, rating: 3, content: 'This is a bad game!', gameId: 3, authorId: 3 },
 ]
 
 export const authors = [
