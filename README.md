@@ -1,56 +1,56 @@
-# GraphQL Mashqi
+# GraphQL Basics
 
-> **GraphQL** — bu API'lar uchun zamonaviy so'rov tilidir. REST o'rniga yoki uning yonida ishlatiladi va klientga aynan kerak bo'lgan ma'lumotni so'rash imkonini beradi.
+> **GraphQL** is a modern query language for APIs. It can be used instead of or alongside REST, and lets clients request exactly the data they need.
 
 ---
 
-## GraphQL nima?
+## What is GraphQL?
 
-**GraphQL** — Facebook (hozirgi Meta) tomonidan 2012-yilda ishlab chiqilgan va 2015-yilda ochiq manba qilingan so'rov tili va runtime. U server va klient o'rtasidagi ma'lumot almashinuvini sodda va moslashuvchan qiladi.
+**GraphQL** is a query language and runtime developed by Facebook (now Meta) in 2012 and open-sourced in 2015. It makes data exchange between server and client simple and flexible.
 
-Agar REST'da har bir resurs uchun alohida endpoint bo'lsa (`/users`, `/posts`, `/comments`), GraphQL'da **bitta endpoint** orqali kerakli ma'lumotni aniq so'rashingiz mumkin.
+In REST, each resource typically has its own endpoint (`/users`, `/posts`, `/comments`). With GraphQL, you use a **single endpoint** to request precisely the data you need.
 
 ```
 REST:     GET /users/1
           GET /users/1/posts
-          GET /posts/5/comments   → 3 ta so'rov
+          GET /posts/5/comments   → 3 requests
 
 GraphQL:  POST /graphql
           { user(id: 1) { name, posts { title, comments { text } } } }
-          → 1 ta so'rov
+          → 1 request
 ```
 
 ---
 
-## Asosiy tushunchalar
+## Core Concepts
 
-| Tushuncha | Vazifasi |
-|-----------|----------|
-| **Schema** | API'ning "shartnomasi" — qanday ma'lumotlar mavjudligi va qanday so'rash mumkinligi |
-| **Query** | Ma'lumot **o'qish** (READ) |
-| **Mutation** | Ma'lumot **yozish/o'zgartirish** (CREATE, UPDATE, DELETE) |
-| **Subscription** | Real-time ma'lumot olish (WebSocket orqali) |
-| **Resolver** | Har bir maydon uchun ma'lumotni qayerdan olishni belgilovchi funksiya |
-| **Type** | Ma'lumot strukturasi (`User`, `Post`, `Comment` va hokazo) |
+| Concept | Purpose |
+|---------|---------|
+| **Schema** | The API "contract" — what data exists and how it can be queried |
+| **Query** | **Read** data |
+| **Mutation** | **Write/update** data (CREATE, UPDATE, DELETE) |
+| **Subscription** | Real-time data updates (via WebSocket) |
+| **Resolver** | A function that defines where to fetch data for each field |
+| **Type** | Data structure (`User`, `Post`, `Comment`, etc.) |
 
 ---
 
 ## GraphQL vs REST
 
-| Xususiyat | REST | GraphQL |
-|-----------|------|---------|
-| Endpointlar | Ko'p (`/users`, `/posts`...) | Bitta (`/graphql`) |
-| Ma'lumot hajmi | Server belgilaydi (over-fetching) | Klient belgilaydi |
-| So'rovlar soni | Ko'p (N+1 muammosi) | Kam (bir so'rovda ko'p ma'lumot) |
-| Hujjatlashtirish | Swagger/OpenAPI | Schema o'z-o'zidan hujjat |
-| O'rganish | Osonroq boshlash | Biroz murakkabroq, lekin kuchliroq |
+| Feature | REST | GraphQL |
+|---------|------|---------|
+| Endpoints | Many (`/users`, `/posts`...) | One (`/graphql`) |
+| Data size | Server decides (over-fetching) | Client decides |
+| Number of requests | Many (N+1 problem) | Few (multiple resources in one request) |
+| Documentation | Swagger/OpenAPI | Self-documenting schema |
+| Learning curve | Easier to start | Slightly steeper, but more powerful |
 
 ---
 
-## Oddiy misol
+## Simple Example
 
 ```graphql
-# So'rov (Query)
+# Query
 query {
   user(id: "1") {
     name
@@ -62,14 +62,14 @@ query {
   }
 }
 
-# Javob (Response)
+# Response
 {
   "data": {
     "user": {
       "name": "Ali",
       "email": "ali@example.com",
       "posts": [
-        { "title": "GraphQL haqida", "createdAt": "2025-01-15" }
+        { "title": "About GraphQL", "createdAt": "2025-01-15" }
       ]
     }
   }
@@ -78,36 +78,36 @@ query {
 
 ---
 
-## Nima uchun GraphQL?
+## Why GraphQL?
 
-- **Over-fetching yo'q** — faqat kerakli maydonlarni olasiz
-- **Under-fetching yo'q** — bir so'rovda bog'liq ma'lumotlarni ham olasiz
-- **Kuchli tipizatsiya** — schema xatolarni erta aniqlaydi
-- **Zamonaviy ekotizim** — Apollo, Relay, Hasura, Prisma va boshqalar
-
----
-
-## Bu repoda nima qilamiz?
-
-Bu repository GraphQL asoslarini amaliy mashq qilish uchun yaratilgan. Bosqichma-bosqich quyidagilarni o'rganamiz:
-
-- [ ] GraphQL schema yozish
-- [ ] Query va Mutation yaratish
-- [ ] Resolver funksiyalar
-- [ ] Apollo Server bilan server qurish
-- [ ] Klientdan so'rov yuborish
+- **No over-fetching** — request only the fields you need
+- **No under-fetching** — fetch related data in a single request
+- **Strong typing** — the schema catches errors early
+- **Modern ecosystem** — Apollo, Relay, Hasura, Prisma, and more
 
 ---
 
-## Foydali havolalar
+## What We'll Build in This Repo
 
-- [GraphQL rasmiy sayti](https://graphql.org)
-- [GraphQL specifikatsiyasi](https://spec.graphql.org)
-- [Apollo Server hujjatlari](https://www.apollographql.com/docs/apollo-server/)
-- [How to GraphQL](https://www.howtographql.com) — bepul o'quv kursi
+This repository is for hands-on practice with GraphQL fundamentals. Step by step, we'll cover:
+
+- [ ] Writing a GraphQL schema
+- [ ] Creating queries and mutations
+- [ ] Resolver functions
+- [ ] Building a server with Apollo Server
+- [ ] Sending requests from a client
 
 ---
 
-## Muallif
+## Useful Links
 
-O'rganish jarayonida yaratilgan mashq loyihasi.
+- [GraphQL official website](https://graphql.org)
+- [GraphQL specification](https://spec.graphql.org)
+- [Apollo Server docs](https://www.apollographql.com/docs/apollo-server/)
+- [How to GraphQL](https://www.howtographql.com) — free tutorial
+
+---
+
+## Author
+
+A practice project created while learning GraphQL.

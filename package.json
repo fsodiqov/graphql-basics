@@ -1,0 +1,20 @@
+{
+  "name": "graphql-basics",
+  "version": "1.0.0",
+  "description": "GraphQL basics practice repository",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "graphql",
+    "apollo",
+    "learning"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@apollo/server": "^5.5.1",
+    "graphql": "^16.14.2"
+  }
+}
