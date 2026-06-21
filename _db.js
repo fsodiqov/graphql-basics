@@ -1,7 +1,7 @@
 export const games = [
-  { id: 1, title: 'The Witcher 3: Wild Hunt', players: ['Geralt of Rivia'] },
-  { id: 2, title: 'The Witcher 2: Assassins of Kings', players: ['Geralt of Rivia'] },
-  { id: 3, title: 'The Witcher', players: ['Geralt of Rivia'] },
+  { id: 1, title: 'The Witcher 3: Wild Hunt', players: ['Geralt of Rivia'], genre: 'RPG' },
+  { id: 2, title: 'The Witcher 2: Assassins of Kings', players: ['Geralt of Rivia'], genre: 'RPG' },
+  { id: 3, title: 'The Witcher', players: ['Geralt of Rivia'], genre: 'RPG' },
 ]
 
 export const reviews = [

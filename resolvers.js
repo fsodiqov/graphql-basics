@@ -1,4 +1,6 @@
 import { games, reviews, authors } from './_db.js'
+import { pubsub, EVENTS } from './pubsub.js'
+import { paginate } from './pagination.js'
 
 const matchId = (a, b) => String(a) === String(b)
 
@@ -13,19 +15,67 @@ const removeById = (items, id) => {
   return items.splice(index, 1)[0]
 }
 
+const ratingToLevel = (rating) => {
+  if (rating <= 1) return 'TERRIBLE'
+  if (rating === 2) return 'BAD'
+  if (rating === 3) return 'AVERAGE'
+  if (rating === 4) return 'GOOD'
+  return 'EXCELLENT'
+}
+
+const toPageInfo = (result) => ({
+  totalCount: result.totalCount,
+  page: result.page,
+  pageSize: result.pageSize,
+  totalPages: result.totalPages,
+  hasNextPage: result.hasNextPage,
+  hasPreviousPage: result.hasPreviousPage,
+})
+
+const assertGameExists = (gameId) => {
+  const game = findById(games, gameId)
+  if (!game) throw new Error('Game not found')
+  return game
+}
+
+const assertAuthorExists = (authorId) => {
+  const author = findById(authors, authorId)
+  if (!author) throw new Error('Author not found')
+  return author
+}
+
 export const resolvers = {
   Query: {
     games: () => games,
     game: (_parent, args) => findById(games, args.id),
+    gamesPaginated: (_parent, args) => {
+      const { page, pageSize, sortOrder } = args.pagination ?? {}
+      const result = paginate(games, { page, pageSize, sortOrder, sortKey: 'title' })
+      return { items: result.items, pageInfo: toPageInfo(result) }
+    },
     reviews: () => reviews,
     review: (_parent, args) => findById(reviews, args.id),
+    reviewsPaginated: (_parent, args) => {
+      const { page, pageSize, sortOrder } = args.pagination ?? {}
+      const filtered = args.minRating
+        ? reviews.filter((review) => review.rating >= args.minRating)
+        : reviews
+      const result = paginate(filtered, { page, pageSize, sortOrder, sortKey: 'rating' })
+      return { items: result.items, pageInfo: toPageInfo(result) }
+    },
     authors: () => authors,
     author: (_parent, args) => findById(authors, args.id),
+    authorsPaginated: (_parent, args) => {
+      const { page, pageSize, sortOrder } = args.pagination ?? {}
+      const result = paginate(authors, { page, pageSize, sortOrder, sortKey: 'name' })
+      return { items: result.items, pageInfo: toPageInfo(result) }
+    },
   },
   Game: {
     reviews: (parent) => reviews.filter((review) => matchId(review.gameId, parent.id)),
   },
   Review: {
+    ratingLevel: (parent) => ratingToLevel(parent.rating),
     game: (parent) => findById(games, parent.gameId),
     author: (parent) => findById(authors, parent.authorId),
   },
@@ -33,64 +83,107 @@ export const resolvers = {
     reviews: (parent) => reviews.filter((review) => matchId(review.authorId, parent.id)),
   },
   Mutation: {
-    createGame: (_parent, args) => {
-      const game = { id: nextId(games), ...args }
+    createGame: (_parent, { input }) => {
+      const game = { id: nextId(games), ...input }
       games.push(game)
+      pubsub.publish(EVENTS.GAME_ADDED, { gameAdded: game })
       return game
     },
-    createReview: (_parent, args) => {
-      const review = {
-        id: nextId(reviews),
-        rating: args.rating,
-        content: args.content,
-        gameId: Number(args.gameId),
-        authorId: Number(args.authorId),
-      }
-      reviews.push(review)
-      return review
-    },
-    createAuthor: (_parent, args) => {
-      const author = { id: nextId(authors), ...args }
-      authors.push(author)
-      return author
-    },
-    updateGame: (_parent, args) => {
-      const game = findById(games, args.id)
+    updateGame: (_parent, { input }) => {
+      const game = findById(games, input.id)
       if (!game) throw new Error('Game not found')
-      game.title = args.title
-      game.players = args.players
+      game.title = input.title
+      game.players = input.players
+      game.genre = input.genre
+      pubsub.publish(EVENTS.GAME_UPDATED, { gameUpdated: game })
       return game
     },
     deleteGame: (_parent, args) => {
       const game = removeById(games, args.id)
       if (!game) throw new Error('Game not found')
+      pubsub.publish(EVENTS.GAME_DELETED, { gameDeleted: game })
       return game
     },
-    updateReview: (_parent, args) => {
-      const review = findById(reviews, args.id)
+    createReview: (_parent, { input }) => {
+      assertGameExists(input.gameId)
+      assertAuthorExists(input.authorId)
+      const review = {
+        id: nextId(reviews),
+        rating: input.rating,
+        content: input.content,
+        gameId: Number(input.gameId),
+        authorId: Number(input.authorId),
+      }
+      reviews.push(review)
+      pubsub.publish(EVENTS.REVIEW_ADDED, { reviewAdded: review })
+      return review
+    },
+    updateReview: (_parent, { input }) => {
+      const review = findById(reviews, input.id)
       if (!review) throw new Error('Review not found')
-      review.rating = args.rating
-      review.content = args.content
-      review.gameId = Number(args.gameId)
-      review.authorId = Number(args.authorId)
+      assertGameExists(input.gameId)
+      assertAuthorExists(input.authorId)
+      review.rating = input.rating
+      review.content = input.content
+      review.gameId = Number(input.gameId)
+      review.authorId = Number(input.authorId)
+      pubsub.publish(EVENTS.REVIEW_UPDATED, { reviewUpdated: review })
       return review
     },
     deleteReview: (_parent, args) => {
       const review = removeById(reviews, args.id)
       if (!review) throw new Error('Review not found')
+      pubsub.publish(EVENTS.REVIEW_DELETED, { reviewDeleted: review })
       return review
     },
-    updateAuthor: (_parent, args) => {
-      const author = findById(authors, args.id)
+    createAuthor: (_parent, { input }) => {
+      const author = { id: nextId(authors), ...input }
+      authors.push(author)
+      pubsub.publish(EVENTS.AUTHOR_ADDED, { authorAdded: author })
+      return author
+    },
+    updateAuthor: (_parent, { input }) => {
+      const author = findById(authors, input.id)
       if (!author) throw new Error('Author not found')
-      author.name = args.name
-      author.verified = args.verified
+      author.name = input.name
+      author.verified = input.verified
+      pubsub.publish(EVENTS.AUTHOR_UPDATED, { authorUpdated: author })
       return author
     },
     deleteAuthor: (_parent, args) => {
       const author = removeById(authors, args.id)
       if (!author) throw new Error('Author not found')
+      pubsub.publish(EVENTS.AUTHOR_DELETED, { authorDeleted: author })
       return author
+    },
+  },
+  Subscription: {
+    gameAdded: {
+      subscribe: () => pubsub.asyncIterator([EVENTS.GAME_ADDED]),
+    },
+    gameUpdated: {
+      subscribe: () => pubsub.asyncIterator([EVENTS.GAME_UPDATED]),
+    },
+    gameDeleted: {
+      subscribe: () => pubsub.asyncIterator([EVENTS.GAME_DELETED]),
+    },
+    reviewAdded: {
+      subscribe: () => pubsub.asyncIterator([EVENTS.REVIEW_ADDED]),
+    },
+    reviewUpdated: {
+      subscribe: () => pubsub.asyncIterator([EVENTS.REVIEW_UPDATED]),
+    },
+    reviewDeleted: {
+      subscribe: () => pubsub.asyncIterator([EVENTS.REVIEW_DELETED]),
+    },
+    authorAdded: {
+      subscribe: () => pubsub.asyncIterator([EVENTS.AUTHOR_ADDED]),
+    },
+    authorUpdated: {
+      subscribe: () => pubsub.asyncIterator([EVENTS.AUTHOR_UPDATED]),
+    },
+    authorDeleted: {
+      subscribe: () => pubsub.asyncIterator([EVENTS.AUTHOR_DELETED]),
     },
   },
 }
